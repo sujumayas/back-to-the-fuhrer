@@ -1,0 +1,81 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>1913 — Procedural Character Lab</title><style>
+:root{--bg:#17191d;--panel:#24262c;--line:#3a3a40;--ink:#f1e8d8;--muted:#b5afa5;--gold:#e3b467}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,sans-serif}.wrap{max-width:1290px;padding:28px 22px 60px;margin:auto}h1{font:700 31px Georgia,serif;margin:0 0 7px}p{color:var(--muted);margin:0 0 18px}.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:16px}button{cursor:pointer;border:1px solid #5b524b;background:#343238;color:#f4ebdf;border-radius:8px;padding:9px 13px;font-weight:650}button.active{background:#81513e;border-color:#c88c57}button:hover{border-color:#deb377}.hint{margin-left:auto;color:#b7afa3;font-size:12px}.sectionHead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:22px 0 10px}h2{font:700 20px Georgia,serif;margin:0}.sub{font-size:12px;color:#a9a49d}.table{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#202127}.head,.entry{display:grid;grid-template-columns:180px repeat(4,minmax(0,1fr));}.head{background:#333036;color:#f0d4aa;text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:750}.head>div{padding:12px;text-align:center}.head>div:first-child{text-align:left}.entry{border-top:1px solid #38373b}.identity{padding:14px 12px;display:flex;justify-content:center;flex-direction:column;gap:4px}.identity strong{font-size:14px}.identity small{color:#a8a19b;font-size:11px}.slot{display:flex;align-items:center;justify-content:center;min-height:132px;border-left:1px solid #35343a;background:radial-gradient(circle at 50% 90%,#363137 0,#29272e 60%,#25252b 100%);position:relative}.slot canvas{width:128px;height:128px;image-rendering:pixelated;image-rendering:crisp-edges}.note{margin:20px 0;padding:14px 16px;background:#25242a;border-left:3px solid #bb8657;color:#bdb5a9;font-size:13px}.badge{display:inline-block;color:#f4ce91;border:1px solid #73593b;border-radius:99px;padding:2px 9px;font-size:11px;margin-left:9px}.foot{font-size:12px;color:#aaa398;margin-top:16px}@media(max-width:730px){.wrap{padding:16px 8px}.head,.entry{grid-template-columns:92px repeat(4,minmax(82px,1fr))}.table{overflow-x:auto}.head,.entry{min-width:490px}.identity{padding:8px}.slot{min-height:105px}.slot canvas{width:96px;height:96px}.hint{margin-left:0}}
+</style></head><body><main class="wrap"><h1>1913 <span style="color:#dfb175">/</span> Character Laboratory</h1><p>No game. No imported images. Every pixel is drawn with JavaScript Canvas rectangles on a 32 × 32 grid.</p><div class="toolbar" id="styles"><strong style="margin-right:5px">Art direction</strong><button data-style="0" class="active">A · Micro / 16px anatomy</button><button data-style="1">B · Chunky / 24px anatomy</button><button data-style="2">C · Expressive / 30px anatomy</button><span class="hint">All rendered on 32×32 canvases</span></div><div class="toolbar" id="settings"><strong>Motion</strong><button id="play" class="active">Pause</button><button id="slower">− Speed</button><button id="faster">+ Speed</button><button id="silhouette">Silhouette test: Off</button><span class="hint" id="speed">8 animation steps / second</span></div><div class="sectionHead"><h2>Same character, four actions <span class="badge" id="stylelabel">A · Micro</span></h2><span class="sub">Procedurally generated; animations loop</span></div><div class="table" id="table"><div class="head"><div>Character type</div><div>Idle / stand</div><div>Walk</div><div>Sit at table</div><div>Raise hand</div></div></div><div class="note">Art direction A uses the fewest rectangles, B offers clearer roles, C allows more expression. Every figure reuses a single drawing function with role-specific palette, headwear, hair, facial hair, and props. The seated pose includes a deliberately minimal table edge for readability.</div><p class="foot">Prototype: self-contained HTML + Canvas 2D, zero assets, zero external dependencies. Historical comedy character design; no gameplay systems.</p></main>
+<script>
+const CHARACTERS=[
+ {id:'birthday',name:'Birthday guest',info:'Distinctive square mustache · cake',skin:'#e9b48b',hair:'#4c3029',coat:'#62513f',pants:'#463c37',hat:'none',beard:'toothbrush',accent:'#c9955b',prop:'cake'},
+ {id:'friend',name:'Dinner companion',info:'Suit · bowler hat',skin:'#efba94',hair:'#6c4028',coat:'#54646a',pants:'#344449',hat:'bowler',beard:'none',accent:'#a95e4a',prop:'glass'},
+ {id:'waiter',name:'Waiter',info:'Vest · apron · tray',skin:'#db9871',hair:'#342b2c',coat:'#faf0dd',pants:'#272930',hat:'none',beard:'none',accent:'#343640',prop:'tray'},
+ {id:'chef',name:'Chef',info:'Tall hat · white coat',skin:'#dc9d76',hair:'#5c402e',coat:'#e9e5d8',pants:'#5a5a58',hat:'chef',beard:'handlebar',accent:'#a9574c',prop:'ladle'},
+ {id:'musician',name:'Musician',info:'Dark suit · violin',skin:'#be805f',hair:'#40302f',coat:'#4a4757',pants:'#302c38',hat:'fedora',beard:'none',accent:'#b5885a',prop:'violin'},
+ {id:'vagrant',name:'Street visitor',info:'Big coat · scarf',skin:'#aa765d',hair:'#5c5041',coat:'#647154',pants:'#524735',hat:'beanie',beard:'full',accent:'#b85d4d',prop:'sign'},
+ {id:'ninja',name:'Suspicious ninja',info:'Mask · scarf',skin:'#dba989',hair:'#252831',coat:'#313640',pants:'#242833',hat:'mask',beard:'none',accent:'#bd5354',prop:'none'},
+ {id:'traveler',name:'Time traveler',info:'Goggles · strange device',skin:'#e2ab85',hair:'#c8a47c',coat:'#9c7560',pants:'#535566',hat:'goggles',beard:'none',accent:'#76bcc5',prop:'device'}
+];
+const ACTIONS=['idle','walk','sit','raise'];const slots=[];let style=0,playing=true,silhouette=false,speed=8,frozen=0;
+const table=document.getElementById('table');for(const ch of CHARACTERS){const row=document.createElement('div');row.className='entry';const identity=document.createElement('div');identity.className='identity';identity.innerHTML='<strong>'+ch.name+'</strong><small>'+ch.info+'</small>';row.append(identity);for(const act of ACTIONS){const cell=document.createElement('div');cell.className='slot';const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;canvas.setAttribute('aria-label',ch.name+' '+act+' animation');cell.append(canvas);row.append(cell);slots.push({canvas,ch,act});}table.append(row);}
+const OUT='#241e24';function rect(ctx,x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));}
+function pix(ctx,x,y,w,h,color){rect(ctx,x-1,y-1,w+2,h+2,silhouette?'#111115':OUT);if(!silhouette)rect(ctx,x,y,w,h,color)}
+function detail(ctx,x,y,w,h,col){if(!silhouette)rect(ctx,x,y,w,h,col)}
+function draw(ctx,ch,act,t){ctx.clearRect(0,0,32,32);ctx.save();const p=style===0?0:style===1?1:2;const width=[7,10,12][p];const headW=[6,8,9][p];const headH=[6,8,9][p];const x=16-width/2;const sitting=act==='sit';const period=(Math.floor(t*speed)%4);const walk=act==='walk';const stride=walk?[0,2,0,-2][period]:0;const bob=walk?[0,-1,0,-1][period]:act==='idle'?(Math.floor(t*2)%2):0;const raise=act==='raise';let top= [8,5,3][p]+bob+(sitting?5:0);const skin=ch.skin,coat=ch.coat,leg=ch.pants,accent=ch.accent;const hx=16-headW/2,hy=top;
+ // floor contact and tiny shadow
+ if(!silhouette)detail(ctx,10,30,12,1,'#4a3d41');
+ if(sitting){ // chair back and furniture behind the sprite
+  pix(ctx,8,20,16,7,'#6d4035');detail(ctx,9,21,14,2,'#a36d55');
+ }
+ // legs and shoes, offset for cycle
+ const legY=top+headH+8;
+ if(sitting){pix(ctx,x+1,legY-1,Math.max(3,width-2),4,leg);pix(ctx,x-1,legY+3,4,2,'#30252b');pix(ctx,x+width-3,legY+3,4,2,'#30252b');}
+ else{pix(ctx,x+1+stride/2,legY,Math.max(2,Math.floor(width/2)-1),5,leg);pix(ctx,x+Math.ceil(width/2)-stride/2,legY,Math.max(2,Math.floor(width/2)-1),5,leg);pix(ctx,x+stride/2,legY+4,Math.max(3,width/2),2,'#382c2d');pix(ctx,x+width/2-stride/2,legY+4,Math.max(3,width/2),2,'#382c2d');}
+ // arms: low-level procedural animation with very large pose changes
+ const torsoY=top+headH-1,torsoH=[8,9,10][p];
+ const armW=p===0?2:3;
+ const leftX=x-armW+1, rightX=x+width-1;
+ const armYOffset=walk?stride:0;
+ pix(ctx,leftX,torsoY+2+Math.max(0,armYOffset),armW,5,coat);
+ detail(ctx,leftX,torsoY+6+Math.max(0,armYOffset),armW,2,skin);
+ if(raise){pix(ctx,rightX,torsoY-7,armW,10,coat);pix(ctx,rightX,torsoY-9,armW,3,skin);}
+ else if(walk){pix(ctx,rightX,torsoY+2-Math.min(0,armYOffset),armW,5,coat);detail(ctx,rightX,torsoY+6-Math.min(0,armYOffset),armW,2,skin);}
+ else{pix(ctx,rightX,torsoY+2,armW,5,coat);detail(ctx,rightX,torsoY+6,armW,2,skin);}
+ // uniform body
+ pix(ctx,x,torsoY,width,torsoH,coat);
+ if(ch.id==='waiter'){detail(ctx,14,torsoY+1,4,torsoH-2,'#2d3036');detail(ctx,15,torsoY+2,2,torsoH-4,'#f6e9d3');}
+ else if(ch.id==='chef'){detail(ctx,12,torsoY+1,8,torsoH-2,'#f5f1e4');detail(ctx,15,torsoY+3,1,1,'#383237');}
+ else if(ch.id==='ninja'){detail(ctx,14,torsoY+4,5,2,accent);}
+ else{detail(ctx,15,torsoY+2,2,Math.min(5,torsoH-2),'#e5d8c6');detail(ctx,16,torsoY+2,1,4,accent);}
+ // neck & head
+ detail(ctx,14,torsoY,4,2,skin);pix(ctx,hx,hy,headW,headH,skin);
+ // ears are limited by sprite size
+ if(p>0){detail(ctx,hx-1,hy+4,1,2,skin);detail(ctx,hx+headW,hy+4,1,2,skin);}
+ // hair cap
+ detail(ctx,hx,hy,headW,2,ch.hair);detail(ctx,hx,hy+1,2,2,ch.hair);
+ // facial expressions: eyes, nose, facial hair
+ if(ch.hat==='mask'){detail(ctx,hx,hy,headW,headH-1,'#272d39');detail(ctx,hx+1,hy+4,headW-2,2,skin);detail(ctx,hx+2,hy+4,1,1,OUT);detail(ctx,hx+headW-3,hy+4,1,1,OUT);}
+ else{detail(ctx,hx+2,hy+Math.min(4,headH-2),1,1,OUT);detail(ctx,hx+headW-3,hy+Math.min(4,headH-2),1,1,OUT);
+ if(ch.beard==='toothbrush'){detail(ctx,15,hy+headH-2,2,2,ch.hair);}
+ if(ch.beard==='handlebar'){detail(ctx,13,hy+headH-2,6,1,ch.hair);detail(ctx,12,hy+headH-3,2,1,ch.hair);detail(ctx,18,hy+headH-3,2,1,ch.hair);}
+ if(ch.beard==='full'){detail(ctx,hx+1,hy+headH-3,headW-2,3,ch.hair);detail(ctx,15,hy+headH-2,2,1,skin);}
+ }
+ // signature hats/outfit pieces
+ if(ch.hat==='bowler'){pix(ctx,hx-2,hy-2,headW+4,2,'#3f3437');pix(ctx,hx,hy-5,headW,4,'#4c3a37');detail(ctx,hx,hy-2,headW,1,'#a45747');}
+ if(ch.hat==='fedora'){pix(ctx,hx-2,hy-2,headW+4,2,'#342c37');pix(ctx,hx+1,hy-5,headW-1,4,'#443a43');detail(ctx,hx+1,hy-2,headW-1,1,accent);}
+ if(ch.hat==='beanie'){pix(ctx,hx,hy-3,headW,4,'#70735c');detail(ctx,hx,hy,headW,1,'#4d5d4b');}
+ if(ch.hat==='chef'){pix(ctx,hx-1,hy-8,headW+2,7,'#f2ebdc');detail(ctx,hx,hy-7,2,3,'#fff7e8');detail(ctx,hx-1,hy-2,headW+2,2,'#cbc4b7');}
+ if(ch.hat==='goggles'){pix(ctx,hx-1,hy-3,headW+2,3,'#7c6857');detail(ctx,hx+1,hy-2,3,2,'#83c7d0');detail(ctx,hx+headW-4,hy-2,3,2,'#83c7d0');}
+ // signature props. Hidden in silhouette, always logically part of a role
+ if(!silhouette && !walk && !raise){let yy=torsoY+4;
+ if(ch.prop==='cake'){detail(ctx,rightX+3,yy,5,2,'#f2e2c5');detail(ctx,rightX+4,yy-2,3,2,'#ae654f');detail(ctx,rightX+5,yy-4,1,2,'#efb65c');}
+ if(ch.prop==='glass'){detail(ctx,rightX+3,yy-2,3,5,'#f4d1a1');detail(ctx,rightX+3,yy,3,2,'#c7a254');}
+ if(ch.prop==='tray'){detail(ctx,rightX+1,yy,7,1,'#a5a3a1');detail(ctx,rightX+3,yy-2,3,2,'#eac89b');}
+ if(ch.prop==='ladle'){detail(ctx,rightX+3,yy-4,1,9,'#a9a4a1');detail(ctx,rightX+2,yy+3,3,2,'#a9a4a1');}
+ if(ch.prop==='violin'){detail(ctx,rightX+1,yy-1,6,3,'#b87944');detail(ctx,rightX+4,yy-4,1,7,'#503929');}
+ if(ch.prop==='sign'){detail(ctx,rightX+3,yy-4,1,9,'#826c54');detail(ctx,rightX+1,yy-7,7,4,'#dbca99');}
+ if(ch.prop==='device'){detail(ctx,rightX+2,yy-3,5,6,'#616976');detail(ctx,rightX+3,yy-2,3,3,'#77d5e3');}
+ }
+ // deliberately tiny seated table foreground, only on sit cells
+ if(sitting){pix(ctx,3,25,26,3,'#9d6650');detail(ctx,4,25,24,1,'#dbc199');detail(ctx,5,28,2,3,'#664239');detail(ctx,25,28,2,3,'#664239');}
+ ctx.restore();}
+function frame(ms){if(playing)frozen=ms/1000;for(const v of slots){const ctx=v.canvas.getContext('2d');draw(ctx,v.ch,v.act,frozen);}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+document.querySelectorAll('[data-style]').forEach(b=>b.onclick=()=>{style=Number(b.dataset.style);document.querySelectorAll('[data-style]').forEach(bb=>bb.classList.toggle('active',bb===b));document.getElementById('stylelabel').textContent=['A · Micro','B · Chunky','C · Expressive'][style];});
+document.getElementById('play').onclick=e=>{playing=!playing;e.target.textContent=playing?'Pause':'Play';e.target.classList.toggle('active',playing);};document.getElementById('slower').onclick=()=>{speed=Math.max(2,speed-2);document.getElementById('speed').textContent=speed+' animation steps / second';};document.getElementById('faster').onclick=()=>{speed=Math.min(16,speed+2);document.getElementById('speed').textContent=speed+' animation steps / second';};document.getElementById('silhouette').onclick=e=>{silhouette=!silhouette;e.target.textContent='Silhouette test: '+(silhouette?'On':'Off');e.target.classList.toggle('active',silhouette);};
+</script></body></html>
